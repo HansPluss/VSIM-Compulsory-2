@@ -287,6 +287,66 @@ void Draw::DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     this->Initalize();
 }
 
+void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
+{
+    // Set the object's position and size
+    position = pos;
+    objSize = size;
+
+    // Initialize B-Spline parameters
+    n_u = 4; // Number of control points in u direction
+    n_v = 3; // Number of control points in v direction
+    d_u = 2; // Degree in u direction
+    d_v = 2; // Degree in v direction
+
+    // Initialize knot vectors
+    mu.clear();
+    mu.push_back(0); mu.push_back(0); mu.push_back(0);
+    mu.push_back(1);
+    mu.push_back(2); mu.push_back(2); mu.push_back(2);
+
+    mv.clear();
+    mv.push_back(0); mv.push_back(0); mv.push_back(0);
+    mv.push_back(1); mv.push_back(1); mv.push_back(1);
+
+    // Initialize control points with enough points
+    mc.clear(); // Clear previous control points if necessary
+    mc.push_back(glm::vec3(0, 0, 0));
+    mc.push_back(glm::vec3(1, 0, 0));
+    mc.push_back(glm::vec3(2, 0, 0));
+    mc.push_back(glm::vec3(3, 0, 0));
+
+    mc.push_back(glm::vec3(0, 1, 0));
+    mc.push_back(glm::vec3(1, 1, 1));
+    mc.push_back(glm::vec3(2, 1, 1));
+    mc.push_back(glm::vec3(3, 1, 0));
+
+    mc.push_back(glm::vec3(0, 2, 0));
+    mc.push_back(glm::vec3(1, 2, 1));
+    mc.push_back(glm::vec3(2, 2, 1));
+    mc.push_back(glm::vec3(3, 2, 0));
+
+    // Copy control points from mc to c
+    if (mc.size() < n_u * n_v) {
+        std::cerr << "Error: Not enough control points initialized." << std::endl;
+        return; // Early exit if there aren't enough control points
+    }
+
+    for (int i = 0; i < n_u; ++i) {
+        for (int j = 0; j < n_v; ++j) {
+            // Adjust the indexing based on how you fill mc
+            c[i][j] = mc[i + j * n_u]; // Ensure correct mapping
+        }
+    }
+
+    // Call the function to make the Biquadratic surface
+    MakeBiquadraticSurface();
+
+    // Initialize any necessary OpenGL state
+    this->Initalize();
+}
+
+
 
 
 void Draw::Initalize()
@@ -336,6 +396,125 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
 
 }
 
+std::vector<glm::vec3> Draw::EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu,glm::vec3& bv)
+{
+    std::vector<glm::vec3> result;
+    float w[3][3];
+    glm::vec3 surfacePoint = glm::vec3(0.0f);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            float weight = bu[i] * bv[j];
+            glm::vec3 controlPoint = c[my_u - i][my_v - j];
+            // Multiply the control point by the weight (scalar * vec3)
+            surfacePoint += weight * controlPoint;
+           /* std::cout << "Control Point [" << (my_u - i) << "][" << (my_v - j) << "]: ("
+                << controlPoint.x << ", " << controlPoint.y << ", " << controlPoint.z << ")\n";*/
+            
+        }
+    }
+    result.push_back(surfacePoint);
+    return result;
+}
+void Draw::MakeBiquadraticSurface()
+{
+
+    float h = 0.1f; // s p a ci n g
+    int nu = (mu[n_u] - mu[d_u]) / h;
+    int nv = (mv[n_v] - mv[d_v]) / h;
+
+    for(int i = 0; i < nv; ++i)
+    {
+        for(int j = 0; j < nu; ++j)
+        {
+            float u = j * h;
+            float v = i * h;
+
+            // Find the corresponding knot intervals for u and v
+            int my_u = FindKnotInterval(mu, d_u, n_u, u);
+            int my_v = FindKnotInterval(mv, d_v, n_v, v);
+
+            // Calculate the basis function coefficients for the current u and v
+            auto koeff_par = B2(u, v, my_u, my_v);
+
+            // Evaluate the biquadratic surface at the current u and v
+            std::vector<glm::vec3> p0 = EvaluateBiquadratic(my_u, my_v, koeff_par.first, koeff_par.second);
+            if (!p0.empty()) {  // Make sure p0 contains at least one point
+                Vertex vertex;
+
+                // Assign the position values from the first glm::vec3 in the result
+                vertex.x = p0[0].x;
+                vertex.y = p0[0].y;
+                vertex.z = p0[0].z;
+
+                vertex.r = 1.0f;
+                vertex.g = 1.0f;
+                vertex.b = 1.0f;
+
+                vertex.u = static_cast<float>(j) / (n_u - 1); // Column index normalized
+                vertex.v = static_cast<float>(i) / (n_v - 1); // Row index normalized
+
+                vertex.normalx = 0.0f;
+                vertex.normaly = 1.0f;
+                vertex.normalz = 0.0f;
+               // std::cout << "Vertex Position: (" << vertex.x << ", " << vertex.y << ", " << vertex.z << ")\n";
+                // Push the computed surface point into the vertices array
+                vertices.push_back(vertex);
+            }
+           
+        }
+    }
+    for (int i = 0; i < nv; ++i) {
+        for (int j = 0; j < nu; ++j) {
+            int idx1 = i * (nu + 1) + j;
+            int idx2 = idx1 + 1;
+            int idx3 = idx1 + (nu + 1);
+            int idx4 = idx3 + 1;
+
+            // First triangle (idx1, idx2, idx3)
+            indices.push_back(idx1);
+            indices.push_back(idx2);
+            indices.push_back(idx3);
+
+            // Second triangle (idx2, idx4, idx3)
+            indices.push_back(idx2);
+            indices.push_back(idx4);
+            indices.push_back(idx3);
+          
+        }
+    }
+   
+  
+}
+
+std::pair<glm::vec3, glm::vec3> Draw::B2(float tu, float tv, int my_u, int my_v)
+{
+    glm::vec3 Bu, Bv;
+
+    // Assuming tu and tv are in the [0, 1] range for the basis functions:
+    Bu.x = (1 - tu) * (1 - tu);
+    Bu.y = 2 * tu * (1 - tu);
+    Bu.z = tu * tu;
+
+    Bv.x = (1 - tv) * (1 - tv);
+    Bv.y = 2 * tv * (1 - tv);
+    Bv.z = tv * tv;
+   /* std::cout << "Bu: (" << Bu.x << ", " << Bu.y << ", " << Bu.z << ")\n";
+    std::cout << "Bv: (" << Bv.x << ", " << Bv.y << ", " << Bv.z << ")\n";*/
+    return std::make_pair(Bu, Bv);
+}
+
+int Draw::FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t)
+{
+    for (int i = degree; i < n; ++i) {
+        if (t >= knots[i] && t < knots[i + 1]) {
+            return i;
+        }
+    }
+    std::cout << "could not find knot" << std::endl;
+    return -1;
+}
 
 
 glm::vec3 Draw::GetPosition()
@@ -478,6 +657,8 @@ void Draw::FollowPlayer(Draw& ball, float speed)
         ApplyForce(force); // Applying the calculated force to move the follower
     }
 }
+
+
 
 void Draw::UpdateTick(float deltatime)
 {

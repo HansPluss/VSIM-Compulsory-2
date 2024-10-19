@@ -24,7 +24,7 @@
     <ProjectGuid>{c00e2a29-f0fa-4428-9a24-fa14d57fd404}</ProjectGuid>
     <RootNamespace>My3Dexam</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>2SPIM-Compulsory-2</ProjectName>
+    <ProjectName>2VSIM-Compulsory-2</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -164,7 +164,6 @@
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemData.cpp" />
     <ClCompile Include="Player.cpp" />
-    <ClCompile Include="Resources\ImportedCode\Construct.cpp" />
     <ClCompile Include="Resources\Shaders\EBO.cpp" />
     <ClCompile Include="Resources\Shaders\shaderClass.cpp" />
     <ClCompile Include="Resources\Shaders\VAO.cpp" />
@@ -210,7 +209,6 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="RenderingSystem.h" />
-    <ClInclude Include="Resources\ImportedCode\Construct.h" />
     <ClInclude Include="Resources\Shaders\EBO.h" />
     <ClInclude Include="Resources\Shaders\shaderClass.h" />
     <ClInclude Include="Resources\Shaders\VAO.h" />

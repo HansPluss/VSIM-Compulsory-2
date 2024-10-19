@@ -36,11 +36,13 @@ public:
 	void DrawBoundingBox(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawSphere(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
+	void DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 
 	//|-----------------------------------------------------------------------------|
 	//|									Public Functions							|
 	//|-----------------------------------------------------------------------------|		
 	void Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos);
+	std::vector<glm::vec3> EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu, glm::vec3& bv);
 	void Update(float deltaTime, Grid* grid);
 	void ApplyForce(glm::vec3 force);
 	void MoveXdir();
@@ -48,7 +50,9 @@ public:
 	void RotateCube(float deltaTime);
 	void CalculateGravity(float inclineAngle, glm::vec3 slopeVector, glm::vec3 normal);
 	void FollowPlayer(Draw& ball, float speed);
-
+	void MakeBiquadraticSurface();
+	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
+	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
 	virtual void UpdateTick(float deltatime) override; 
 
 	//|-----------------------------------------------------------------------------|
@@ -104,6 +108,19 @@ private:
 	glm::vec3 normalvector = glm::vec3(0, 0, 0);
 	float mass = 1.0f;
 	float gravity = -9.81;
+	//|-----------------------------------------------------------------------------|
+    //|								Biquadratic B-Spline								|
+    //|-----------------------------------------------------------------------------|
+	int n_u = 4; // controll points for u
+	int n_v = 3; // controll points for v
+	int d_u = 2;
+	int d_v = 2;
+	float hu = 0.1f, hv = 0.1f;
+	std::vector <float> mu; // vector u
+	std::vector <float> mv; // vector v
+	
+	std::vector<glm::vec3> mc; // controll points u direction
+	glm::vec3 c[4][3];
 
 	//|-----------------------------------------------------------------------------|
 	//|								Class initalizing								|

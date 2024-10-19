@@ -117,8 +117,12 @@ int main()
 
     // Terrain Entity
     Entity planeObject;
-    planeObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
-    planeObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "terrain");
+    planeObject.AddComponent<PositionComponent>(0.0f, 0.0f, -10.0f);
+    planeObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
+
+    Entity splinesurface;
+    splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
 
     // Intializing Systems
@@ -163,7 +167,7 @@ int main()
 
 
     }
-
+    renderSystem->initalize(splinesurface);
     // Setting up grid for collison optimization  
     int cellSize = 8;
     int gridSizeX = 1000;
@@ -187,7 +191,7 @@ int main()
     }
 
     // Camera FOV & starting position
-    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 40.0f, 0.0f));
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 20.0f, 0.0f));
 
     // Initalizing textures
     Texture wood("Resources/Textures/wood.png", shaderProgram);
@@ -255,7 +259,7 @@ int main()
         // Setup camera settings and inputs
         camera->Inputs(window);
         glm::mat4 viewproj = camera->Matrix(45.0f, 0.1f, 1000.0f, shaderProgram, "camMatrix");
-        camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
+        //camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
 
         // Collision detection
         collision->UpdateCollision(m_grid.get(), dt);
@@ -270,7 +274,9 @@ int main()
             spawnObj = false;
         }
         //updates the combat system with a timer so that attacks can't be applied more than once per frame
-        combatSystem->Update(dt);
+        //combatSystem->Update(dt);
+        glBindTexture(GL_TEXTURE_2D, green.texture);
+        renderSystem->Render(splinesurface, shaderProgram, viewproj);
         for (int i = 0; i < myEntities.size(); ++i) {
 
             if (myEntities[i]->GetComponent<RenderComponent>()->shape == "terrain") {
@@ -284,42 +290,21 @@ int main()
             else if (myEntities[i]->GetComponent<RenderComponent>()->shape == "cube") {
                 glBindTexture(GL_TEXTURE_2D, textures[4].texture);
             }
+           
 
             //Gives movement/physics to entities
-            physicsSystem->Update(*myEntities[i], dt);
+            //physicsSystem->Update(*myEntities[i], dt);
             //Calculates the collisions
-            collisionSystem->BarycentricCoordinates(*myEntities[i], planeObject, physicsSystem);
+            //collisionSystem->BarycentricCoordinates(*myEntities[i], planeObject, physicsSystem);
             //Renders the entities
             renderSystem->Render(*myEntities[i], shaderProgram, viewproj);
             
             
             //Checks if the entity is a projectile
-            if (Projectile* projectile = dynamic_cast<Projectile*>(myEntities[i])) {
-                
-                //Start the despawn timer
-                if (!projectile->isMarkedForDeletion) {
-                    projectile->DespawnTimer(dt);
-                }
-                //Check if projectile collides with an enemy
-                if (collisionSystem->SphereCollision(*myEntities[i], enemy, dt)) {
-                    combatSystem->DealDamage(*myEntities[i], enemy, manager);
-                    if (enemy.GetComponent<HealthComponent>()->health <= 0) {
-                        //enemy has less than 0 health, enemy is dead
-                        //enemy will drop an item
-                        enemy.Death(manager,myEntities,renderSystem);
-
-                    }
-                    //Removes the projectile as it has collided with the enemy
-                    myEntities[i]->isMarkedForDeletion = true;
-                }
-            }
-            //Checks if the entity is a item
-            if (Item* item = dynamic_cast<Item*>(myEntities[i])) {
-                item->checkCollision(player);
-            } 
+           
             //Checks if the entity is a player
             if (Player* player = dynamic_cast<Player*>(myEntities[i])) {
-                inputSystem->processInput(*player, window);
+                //inputSystem->processInput(*player, window);
                 //If player and enemy collide, deal damage to the player
                 if (collisionSystem->SphereCollision(*player, enemy, dt)) {
                     //player takes damage
@@ -328,10 +313,7 @@ int main()
                 }
             }
             //Checks if the entity is a enemy
-            if (Enemy* enemy = dynamic_cast<Enemy*>(myEntities[i])) {
-                //very basic AI for the enemy to follow the player
-                enemy->FollowEntity(player, physicsSystem);
-            }
+         
         }
        
         // DOD 

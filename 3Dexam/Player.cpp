@@ -2,7 +2,7 @@
 #include <memory>
 Player::Player()
 {
-	AddComponent<PositionComponent>(-5.0f, 10.0f, 0.0f);
+	AddComponent<PositionComponent>(10.0f, 0.0f, 0.0f);
 	AddComponent<VelocityComponent>();
 	AddComponent<AccelerationComponent>();
 	AddComponent<InputComponent>();
