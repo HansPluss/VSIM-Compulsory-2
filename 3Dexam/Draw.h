@@ -58,6 +58,7 @@ public:
 	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
 	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
 	virtual void UpdateTick(float deltatime) override; 
+	void Readfile(const char* fileName, std::vector<Vertex>& vertices);
 
 	//|-----------------------------------------------------------------------------|
 	//|									Getters										|

@@ -8,8 +8,7 @@
 #include "Grid.h"
 #include "Component.h"
 #include <random> // For random seeds
-
-
+ 
 Draw::Draw() : rotation(glm::quat(0.0, 0.0, 0.0, 0.0))
 {
 }
@@ -569,56 +568,34 @@ std::vector<glm::vec3> Draw::ReadLazFile(const std::string& filePath)
 {
     std::vector<glm::vec3> points;
 
-    
-    //laszip_POINTER laszipReader = nullptr;
-    //int create_result = laszip_create(&laszipReader);
-    //if (create_result != 0) {
-    //    std::cerr << "Failed to create LASzip reader. Error code: " << create_result << std::endl;
-    //    return points; // Return empty vector on failure
-    //}
-
-    //// Open the LAS/LAZ file
    
-    //laszip_BOOL useCompressed = true; // Adjust based on your needs
-    //if (laszip_open_reader(laszipReader, filePath.c_str(), &useCompressed) != 0) {
-    //    std::cerr << "Failed to open file: " << filePath << std::endl;
-    //    laszip_destroy(laszipReader);
-    //    return points; // Return empty vector on failure
-    //}
-
-    //// Retrieve the header
-    //laszip_header* header = new laszip_header();
-    //if (laszip_get_header_pointer(laszipReader, &header) != 0) {
-    //    std::cerr << "Failed to get header pointer." << std::endl;
-    //    laszip_close_reader(laszipReader);
-    //    laszip_destroy(laszipReader);
-    //    delete header; // Clean up
-    //    return points; // Return empty vector on failure
-    //}
-
-    //// Allocate memory for point data
-    //laszip_point* pointData = new laszip_point;
-
-    //// Read each point
-    //for (uint32_t i = 0; i < header->number_of_point_records; ++i) {
-    //    if (laszip_read_point(pointData) != 0) {
-    //        std::cerr << "Failed to read point data." << std::endl;
-    //        break; // Stop reading on failure
-    //    }
-
-    //    // Access the point coordinates and add to the vector
-    //    glm::vec3 point(pointData->X, pointData->Y, pointData->Z);
-    //    points.push_back(point);
-    //}
-
-    //// Clean up
-    //delete pointData; // Release memory for a single point
-    //laszip_close_reader(laszipReader);
-    //laszip_destroy(laszipReader);
 
     return points; // Return the vector of points
 }
+void Readfile(const char* fileName, std::vector<Vertex>& vertices) {
+    std::ifstream inputFile(fileName);
+    if (inputFile.is_open()) {
 
+
+        std::string line;
+        std::getline(inputFile, line);
+        Vertex vertex;
+        char comma; // to capture the commas in the file
+
+        while (inputFile >> vertex.x >> comma >> vertex.y >> comma >> vertex.z >> comma
+            >> vertex.r >> comma >> vertex.g >> comma >> vertex.b) {
+            vertices.push_back(vertex);
+        }
+
+        inputFile.close();
+    }
+    else {
+        std::cerr << "Unable to open the input file for reading." << std::endl;
+    }
+
+
+
+}
 
 
 glm::vec3 Draw::GetPosition()
