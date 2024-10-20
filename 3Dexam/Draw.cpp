@@ -350,7 +350,7 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
 	position = pos;
 	objSize = size;
-    const char* file = "32-1-516-156-73.txt";
+    const char* file = "32-2-516-156-31.txt";
 	std::vector<glm::vec3> pointCloud = Readfile(file);
     for (const auto& point : pointCloud) {
         Vertex vertex;
@@ -360,17 +360,17 @@ void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
         vertex.z = point.z;
 
         // Set UV coordinates based on some logic if needed
-        vertex.u = 0.0f; // Set these based on your requirements
-        vertex.v = 0.0f;
+        vertex.u = point.x; // Set these based on your requirements
+        vertex.v = point.y;
 
         // Set colors, normals, etc. if available in LAZ
         vertex.r = 1.0f; // Default or set based on your requirements
         vertex.g = 1.0f;
         vertex.b = 1.0f;
-
+        
         vertices.push_back(vertex);
     }
-    this->Initalize();
+    this->InitalizePoints();
 }
 
 
@@ -398,6 +398,32 @@ void Draw::Initalize()
     EBO1.Unbind();
 }
 
+void Draw::InitalizePoints()
+{
+    VAO.Bind(); // Binding the VAO
+    VBO.Bind(); // Binding the VBO and upload vertex data
+
+    // Upload vertex data to the GPU
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    // Setting vertex attributes pointers
+    VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, x)); // Position
+    VAO.LinkAttrib(VBO, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, r)); // Color
+    VAO.LinkAttrib(VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, u)); // TexCoords
+
+    // If using an EBO, you need to bind the EBO and upload index data
+    if (!indices.empty()) // Check if you have index data
+    {
+        EBO1.Bind();
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+        EBO1.Unbind(); // Unbind EBO after uploading data
+    }
+
+    // Unbinding VAO and VBO after setup
+    VAO.Unbind();
+    VBO.Unbind();
+}
+
 void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos)
 {
     glm::mat4 model2 = glm::mat4(1.0f);
@@ -408,7 +434,7 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
     model2 = glm::translate(model2, pos.position);
     model2 = glm::scale(model2, objSize);
     model2 *= rotation;
-    glUniformMatrix4fv(glGetUniformLocation(Shader->ID, "camMatrix"), 1, GL_FALSE, glm::value_ptr(viewproj * model2));
+   
     VAO.Bind();
     VBO.Bind();
     EBO1.Bind();
@@ -423,27 +449,34 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
 
 }
 
-void Draw::RenderPoints(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj)
+void Draw::RenderPoints(const std::shared_ptr<Shader>& shader, glm::mat4 viewproj)
 {
     glm::mat4 model2 = glm::mat4(1.0f);
 
-   
-    rotation = glm::mat4_cast(Quaternion);
     model2 = glm::translate(model2, position);
     model2 = glm::scale(model2, objSize);
-    model2 *= rotation;
-    glUniformMatrix4fv(glGetUniformLocation(Shader->ID, "camMatrix"), 1, GL_FALSE, glm::value_ptr(viewproj * model2));
+
+    // Get the uniform location
+    GLint camMatrixLocation = glGetUniformLocation(shader->ID, "camMatrix");
+    if (camMatrixLocation != -1) {
+        glUniformMatrix4fv(camMatrixLocation, 1, GL_FALSE, glm::value_ptr(viewproj * model2));
+    }
+    else {
+        // Handle the error appropriately (e.g., log it)
+        std::cerr << "Error: 'camMatrix' uniform not found in shader!" << std::endl;
+    }
+
     VAO.Bind();
     VBO.Bind();
-    EBO1.Bind();
 
-    glDrawArrays(GL_POINT, 0, vertices.size());
-    // glDrawArrays(GL_POINT, 0, vertices.size());
-     //unbind
+    // Adjust point size as needed
+    glDrawArrays(GL_POINTS, 0, vertices.size()); // Use GL_POINTS instead of GL_POINT
+   // glPointSize(1.0f);
+    // Unbind
     VAO.Unbind();
     VBO.Unbind();
-    EBO1.Unbind();
 }
+
 
 std::vector<glm::vec3> Draw::EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu,glm::vec3& bv)
 {
@@ -748,7 +781,7 @@ std::vector<glm::vec3> Draw::Readfile(const char* fileName)
     else {
         std::cerr << "Unable to open the input file for reading." << std::endl;
     }
-
+    std::cout << "point Cloud " << pointCloud.size();
     return pointCloud;
 
 

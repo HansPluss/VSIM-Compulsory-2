@@ -230,6 +230,10 @@
     <Image Include="Resources\Textures\brick.png" />
     <Image Include="Resources\Textures\icon.jpg" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="32-1-516-156-73.txt" />
+    <Text Include="32-2-516-156-31.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -122,7 +122,7 @@ int main()
 
     // Terrain Entity
     Entity planeObject;
-    planeObject.AddComponent<PositionComponent>(0.0f, 0.0f, -10.0f);
+    planeObject.AddComponent<PositionComponent>(608277.0f, 400.0f, 6750600.0f);
     planeObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
 
     Entity splinesurface;
@@ -130,8 +130,8 @@ int main()
     splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
     Entity pointCloud;
-    pointCloud.AddComponent<PositionComponent>(0.0f, -300.0f, 0.0f);
-    pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "pointcloud");
+    pointCloud.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
 
 
     // Intializing Systems
@@ -177,7 +177,7 @@ int main()
     }
 
     // Camera FOV & starting position
-    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 20.0f, 0.0f));
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(608277.0f, 400.0f, 6750600.0f));
 
     // Initalizing textures
     Texture wood("Resources/Textures/wood.png", shaderProgram);
@@ -245,6 +245,7 @@ int main()
 
       
         //poitcloud 
+        glBindTexture(GL_TEXTURE_2D, green.texture);
 		renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
 
         glBindTexture(GL_TEXTURE_2D, green.texture);
