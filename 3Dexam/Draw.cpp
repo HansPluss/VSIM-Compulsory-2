@@ -348,7 +348,10 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 
 void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
-    std::vector<glm::vec3> pointCloud = ReadLazFile("32-2-516-156-31.laz");
+	position = pos;
+	objSize = size;
+    const char* file = "32-1-516-156-73.txt";
+	std::vector<glm::vec3> pointCloud = Readfile(file);
     for (const auto& point : pointCloud) {
         Vertex vertex;
 
@@ -434,7 +437,7 @@ void Draw::RenderPoints(const std::shared_ptr<Shader>& Shader, glm::mat4 viewpro
     VBO.Bind();
     EBO1.Bind();
 
-    glDrawArrays(GL_POINTS, 0, vertices.size());
+    glDrawArrays(GL_POINT, 0, vertices.size());
     // glDrawArrays(GL_POINT, 0, vertices.size());
      //unbind
     VAO.Unbind();
@@ -571,30 +574,6 @@ std::vector<glm::vec3> Draw::ReadLazFile(const std::string& filePath)
    
 
     return points; // Return the vector of points
-}
-void Readfile(const char* fileName, std::vector<Vertex>& vertices) {
-    std::ifstream inputFile(fileName);
-    if (inputFile.is_open()) {
-
-
-        std::string line;
-        std::getline(inputFile, line);
-        Vertex vertex;
-        char comma; // to capture the commas in the file
-
-        while (inputFile >> vertex.x >> comma >> vertex.y >> comma >> vertex.z >> comma
-            >> vertex.r >> comma >> vertex.g >> comma >> vertex.b) {
-            vertices.push_back(vertex);
-        }
-
-        inputFile.close();
-    }
-    else {
-        std::cerr << "Unable to open the input file for reading." << std::endl;
-    }
-
-
-
 }
 
 
@@ -744,5 +723,34 @@ void Draw::FollowPlayer(Draw& ball, float speed)
 void Draw::UpdateTick(float deltatime)
 {
     
+}
+
+std::vector<glm::vec3> Draw::Readfile(const char* fileName)
+{
+    std::ifstream inputFile(fileName);
+    std::vector<glm::vec3> pointCloud;
+    if (inputFile.is_open()) {
+
+        std::string line;
+        std::getline(inputFile, line);
+        Vertex vertex;
+        char comma; // to capture the commas in the file
+        glm::vec3 point;
+
+
+        while (inputFile >> point.x >> comma >> point.z >> comma >> point.y) {
+
+            pointCloud.push_back(point);
+        }
+
+        inputFile.close();
+    }
+    else {
+        std::cerr << "Unable to open the input file for reading." << std::endl;
+    }
+
+    return pointCloud;
+
+
 }
 

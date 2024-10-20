@@ -36,9 +36,6 @@
 #include <fstream>  // std::ifstream
 
 
-std::ifstream ifs("file.laz", std::ios::in | std::ios::binary);
-
-
 
 
 
@@ -133,7 +130,7 @@ int main()
     splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
     Entity pointCloud;
-    pointCloud.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    pointCloud.AddComponent<PositionComponent>(0.0f, -300.0f, 0.0f);
     pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "pointcloud");
 
 
@@ -247,6 +244,8 @@ int main()
         //camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
 
       
+        //poitcloud 
+		renderSystem->RenderPoints(pointCloud, shaderProgram, viewproj);
 
         glBindTexture(GL_TEXTURE_2D, green.texture);
         renderSystem->Render(splinesurface, shaderProgram, viewproj);
