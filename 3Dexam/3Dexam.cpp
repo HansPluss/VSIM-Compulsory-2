@@ -8,6 +8,7 @@
 #include <stb/stb_image.h>
 #include <chrono>
 
+
 // Classes
 #include "Resources/Shaders/shaderClass.h"
 #include "Texture.h"
@@ -16,8 +17,6 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Component.h"
-#include "Enemy.h"
-#include "Projectile.h"
 #include "ImGuiManager.h"
 #include "Item.h"
 
@@ -32,6 +31,15 @@
 #include "CollisionSystem.h"
 #include "InputSystem.h"
 #include "Resources/Systems/CombatSystem.h"
+
+#include <fstream>  // std::ifstream
+
+
+std::ifstream ifs("file.laz", std::ios::in | std::ios::binary);
+
+
+
+
 
 // Some of the code for the spotlight is from the following repo
 // https://github.com/VictorGordan/opengl-tutorials.git
@@ -106,8 +114,7 @@ int main()
     std::shared_ptr<EntityManager> manager = std::make_shared<EntityManager>();
    
     // Enemy Entity
-    Enemy& enemy = manager->CreateEntityDerivedFromClass<Enemy>();
-    enemy.GetComponent<AIComponent>()->speed = 5.0f;
+
 
     // Player Entity
     Player player;
@@ -124,58 +131,39 @@ int main()
     splinesurface.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
+    Entity pointCloud;
+    pointCloud.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "pointcloud");
+
 
     // Intializing Systems
     std::shared_ptr <RenderingSystem> renderSystem = std::make_shared<RenderingSystem>();
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
-    std::shared_ptr <CombatSystem> combatSystem = std::make_shared<CombatSystem>();
 
-    std::vector<Tick*> Ticks;
+    renderSystem->initalize(splinesurface);
+    renderSystem->initalize(pointCloud);
+    
+
 
   
-    //Store Components
-    PositionStorage positionStorage;
-    VelocityStorage velocityStorage;
-    AccelerationStorage accelerationStorage;
 
     // Intializing entity vector
     std::vector<Entity*> myEntities;
     myEntities.push_back(&player);
-    myEntities.push_back(&enemy);
     myEntities.push_back(&planeObject);
    
 
     //Add all components to storage for batch proccesing
     for (auto& entity : myEntities) {
 
-        renderSystem->initalize(*entity);
-        if (auto* posComponent = entity->GetComponent<PositionComponent>()) {
-           
-           positionStorage.AddPosition(posComponent->position, entity->GetId());
-        }
-        if (auto* velocityComponent = entity->GetComponent<VelocityComponent>()) {
-
-            velocityStorage.AddVelocity(velocityComponent->velocity, entity->GetId());
-        }
-        if (auto* accelrationComponent = entity->GetComponent<AccelerationComponent>()) {
-
-            accelerationStorage.AddAcceleration(accelrationComponent->acceleration, entity->GetId());
-        }
 
         renderSystem->initalize(*entity);
 
 
     }
-    renderSystem->initalize(splinesurface);
-    // Setting up grid for collison optimization  
-    int cellSize = 8;
-    int gridSizeX = 1000;
-    int gridSizeZ = 1000;
-    std::unique_ptr<Grid> m_grid = std::make_unique<Grid>(gridSizeX, gridSizeZ, cellSize);
-    glm::vec4 treeBounds(0, 0, gridSizeX, gridSizeZ);
-    m_grid->AddBaLL(&player);
-    m_grid->AddBaLL(&enemy);
+    
+ 
     std::vector<Texture> textures;
 
     char basePath[] = "Resources/Textures/";
@@ -251,30 +239,14 @@ int main()
         float dt = deltaTime.count();
 
         // Updates Tick
-        for (Tick* obj : Ticks)
-        {
-            obj->UpdateTick(dt);
-        }
-
+    
         // Setup camera settings and inputs
         camera->Inputs(window);
         glm::mat4 viewproj = camera->Matrix(45.0f, 0.1f, 1000.0f, shaderProgram, "camMatrix");
         //camera->Position = glm::vec3(player.GetComponent<PositionComponent>()->position.x, camera->Position.y, player.GetComponent<PositionComponent>()->position.z + 25);
 
-        // Collision detection
-        collision->UpdateCollision(m_grid.get(), dt);
+      
 
-
-        // Spawns a projectile that deals damage to the enemy
-        if (spawnObj) {
-            Projectile& bullet = manager->CreateEntityDerivedFromClass<Projectile>();
-            renderSystem->initalize(bullet);
-            bullet.MoveProjectile(player, physicsSystem);
-            myEntities.push_back(&bullet);
-            spawnObj = false;
-        }
-        //updates the combat system with a timer so that attacks can't be applied more than once per frame
-        //combatSystem->Update(dt);
         glBindTexture(GL_TEXTURE_2D, green.texture);
         renderSystem->Render(splinesurface, shaderProgram, viewproj);
         for (int i = 0; i < myEntities.size(); ++i) {
@@ -300,28 +272,10 @@ int main()
             renderSystem->Render(*myEntities[i], shaderProgram, viewproj);
             
             
-            //Checks if the entity is a projectile
-           
-            //Checks if the entity is a player
-            if (Player* player = dynamic_cast<Player*>(myEntities[i])) {
-                //inputSystem->processInput(*player, window);
-                //If player and enemy collide, deal damage to the player
-                if (collisionSystem->SphereCollision(*player, enemy, dt)) {
-                    //player takes damage
-                    combatSystem->DealDamage(enemy, *player, manager);
-
-                }
-            }
-            //Checks if the entity is a enemy
+            
          
         }
        
-        // DOD 
-        // Updating the position and collision through batch proccesing 
-        // Currenly works for updating positions, but not for our physics system
-        // 
-        //collisionSystem->DODBarycentric(positionStorage, accelerationStorage, velocityStorage, myEntities, planeObject, physicsSystem);
-        //physicsSystem->UpdatePositions(positionStorage, accelerationStorage, velocityStorage, myEntities, dt);
 
         //Deletes the entities
         manager->DeleteEntities(myEntities);

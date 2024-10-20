@@ -34,6 +34,9 @@ public:
             else if (renderComponent->shape == "bsplinesurface") {
                 renderComponent->Draw.DrawBSplineSurface(renderComponent->color, positionComponent->position, renderComponent->size);
             }
+            else if (renderComponent->shape == "pointcloud") {
+                renderComponent->Draw.DrawPoints(renderComponent->color, positionComponent->position, renderComponent->size);
+            }
             else 
 			{
 				std::cout << "Shape not found" << std::endl;
@@ -61,6 +64,18 @@ public:
         }
           
         
+    }
+    void RenderPoints(Entity& entity, const std::shared_ptr<Shader>& shader, glm::mat4 viewproj) {
+        if (entity.isMarkedForDeletion) return;
+        auto* renderComponent = entity.GetComponent<RenderComponent>();
+        auto* positionComponent = entity.GetComponent<PositionComponent>();
+        if (positionComponent && renderComponent) {
+
+            // Calling the general render function
+            renderComponent->Draw.RenderPoints(shader, viewproj);
+           
+        }
+
     }
     void Rotate(Entity& entity, float deltaTime) {
         if (entity.isMarkedForDeletion) return;

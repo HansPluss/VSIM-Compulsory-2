@@ -9,6 +9,7 @@
 #include "Component.h"
 #include <random> // For random seeds
 
+
 Draw::Draw() : rotation(glm::quat(0.0, 0.0, 0.0, 0.0))
 {
 }
@@ -346,6 +347,30 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     this->Initalize();
 }
 
+void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
+{
+    std::vector<glm::vec3> pointCloud = ReadLazFile("32-2-516-156-31.laz");
+    for (const auto& point : pointCloud) {
+        Vertex vertex;
+
+        vertex.x = point.x;
+        vertex.y = point.y;
+        vertex.z = point.z;
+
+        // Set UV coordinates based on some logic if needed
+        vertex.u = 0.0f; // Set these based on your requirements
+        vertex.v = 0.0f;
+
+        // Set colors, normals, etc. if available in LAZ
+        vertex.r = 1.0f; // Default or set based on your requirements
+        vertex.g = 1.0f;
+        vertex.b = 1.0f;
+
+        vertices.push_back(vertex);
+    }
+    this->Initalize();
+}
+
 
 
 
@@ -394,6 +419,28 @@ void Draw::Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, Pos
     EBO1.Unbind();
 
 
+}
+
+void Draw::RenderPoints(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj)
+{
+    glm::mat4 model2 = glm::mat4(1.0f);
+
+   
+    rotation = glm::mat4_cast(Quaternion);
+    model2 = glm::translate(model2, position);
+    model2 = glm::scale(model2, objSize);
+    model2 *= rotation;
+    glUniformMatrix4fv(glGetUniformLocation(Shader->ID, "camMatrix"), 1, GL_FALSE, glm::value_ptr(viewproj * model2));
+    VAO.Bind();
+    VBO.Bind();
+    EBO1.Bind();
+
+    glDrawArrays(GL_POINTS, 0, vertices.size());
+    // glDrawArrays(GL_POINT, 0, vertices.size());
+     //unbind
+    VAO.Unbind();
+    VBO.Unbind();
+    EBO1.Unbind();
 }
 
 std::vector<glm::vec3> Draw::EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu,glm::vec3& bv)
@@ -515,6 +562,63 @@ int Draw::FindKnotInterval(const std::vector<float>& knots, int degree, int n, f
     std::cout << "could not find knot" << std::endl;
     return -1;
 }
+
+
+
+std::vector<glm::vec3> Draw::ReadLazFile(const std::string& filePath)
+{
+    std::vector<glm::vec3> points;
+
+    
+    //laszip_POINTER laszipReader = nullptr;
+    //int create_result = laszip_create(&laszipReader);
+    //if (create_result != 0) {
+    //    std::cerr << "Failed to create LASzip reader. Error code: " << create_result << std::endl;
+    //    return points; // Return empty vector on failure
+    //}
+
+    //// Open the LAS/LAZ file
+   
+    //laszip_BOOL useCompressed = true; // Adjust based on your needs
+    //if (laszip_open_reader(laszipReader, filePath.c_str(), &useCompressed) != 0) {
+    //    std::cerr << "Failed to open file: " << filePath << std::endl;
+    //    laszip_destroy(laszipReader);
+    //    return points; // Return empty vector on failure
+    //}
+
+    //// Retrieve the header
+    //laszip_header* header = new laszip_header();
+    //if (laszip_get_header_pointer(laszipReader, &header) != 0) {
+    //    std::cerr << "Failed to get header pointer." << std::endl;
+    //    laszip_close_reader(laszipReader);
+    //    laszip_destroy(laszipReader);
+    //    delete header; // Clean up
+    //    return points; // Return empty vector on failure
+    //}
+
+    //// Allocate memory for point data
+    //laszip_point* pointData = new laszip_point;
+
+    //// Read each point
+    //for (uint32_t i = 0; i < header->number_of_point_records; ++i) {
+    //    if (laszip_read_point(pointData) != 0) {
+    //        std::cerr << "Failed to read point data." << std::endl;
+    //        break; // Stop reading on failure
+    //    }
+
+    //    // Access the point coordinates and add to the vector
+    //    glm::vec3 point(pointData->X, pointData->Y, pointData->Z);
+    //    points.push_back(point);
+    //}
+
+    //// Clean up
+    //delete pointData; // Release memory for a single point
+    //laszip_close_reader(laszipReader);
+    //laszip_destroy(laszipReader);
+
+    return points; // Return the vector of points
+}
+
 
 
 glm::vec3 Draw::GetPosition()

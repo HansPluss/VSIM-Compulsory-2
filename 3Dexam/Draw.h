@@ -8,6 +8,7 @@
 #include "glm/glm.hpp"
 #include "Tick.h"
 #include <memory>
+#include <string>
 
 class Shader;
 struct Cell; 
@@ -37,11 +38,13 @@ public:
 	void DrawSphere(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawTerrain(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 	void DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
+	void DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size);
 
 	//|-----------------------------------------------------------------------------|
 	//|									Public Functions							|
 	//|-----------------------------------------------------------------------------|		
 	void Render(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj, PositionComponent& pos);
+	void RenderPoints(const std::shared_ptr<Shader>& Shader, glm::mat4 viewproj);
 	std::vector<glm::vec3> EvaluateBiquadratic(int my_u, int my_v, glm::vec3& bu, glm::vec3& bv);
 	void Update(float deltaTime, Grid* grid);
 	void ApplyForce(glm::vec3 force);
@@ -53,6 +56,7 @@ public:
 	void MakeBiquadraticSurface();
 	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
 	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
+	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
 	virtual void UpdateTick(float deltatime) override; 
 
 	//|-----------------------------------------------------------------------------|
