@@ -177,7 +177,7 @@ int main()
     }
 
     // Camera FOV & starting position
-    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(608277.0f, 400.0f, 6750600.0f));
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>(SCR_WIDTH, SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Initalizing textures
     Texture wood("Resources/Textures/wood.png", shaderProgram);
@@ -227,7 +227,7 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -281,7 +281,7 @@ int main()
         //Deletes the entities
         manager->DeleteEntities(myEntities);
         //UI display
-        imgui->BasicText("Inventory", player);
+        //imgui->BasicText("Inventory", player);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
