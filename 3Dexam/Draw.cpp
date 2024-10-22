@@ -309,39 +309,36 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     mv.push_back(0); mv.push_back(0); mv.push_back(0);
     mv.push_back(1); mv.push_back(1); mv.push_back(1);
 
-    // Initialize control points with enough points
+    // Initialize control points with enough points (Y and Z switched)
     mc.clear(); // Clear previous control points if necessary
-    for (auto i = 0; i < n_u; ++i) {
-       
 
-
-
-    }
-    mc.push_back(glm::vec3(0, 0, 0));
+    // Control points after switching Y and Z values
+    mc.push_back(glm::vec3(0, 0, 0));  // (x, z, y) -> (x, y, z)
     mc.push_back(glm::vec3(1, 0, 0));
     mc.push_back(glm::vec3(2, 0, 0));
     mc.push_back(glm::vec3(3, 0, 0));
 
-    mc.push_back(glm::vec3(0, 1, 0));
-    mc.push_back(glm::vec3(1, 1, 1));
+    mc.push_back(glm::vec3(0, 0, 1));  // Previously (0, 1, 0), now (0, 0, 1)
+    mc.push_back(glm::vec3(1, 1, 1));  // Previously (1, 1, 1), remains same
     mc.push_back(glm::vec3(2, 1, 1));
-    mc.push_back(glm::vec3(3, 1, 0));
+    mc.push_back(glm::vec3(3, 0, 1));  // Previously (3, 1, 0), now (3, 0, 1)
 
-    mc.push_back(glm::vec3(0, 2, 0));
-    mc.push_back(glm::vec3(1, 2, 1));
-    mc.push_back(glm::vec3(2, 2, 1));
-    mc.push_back(glm::vec3(3, 2, 0));
+    mc.push_back(glm::vec3(0, 0, 2));  // Previously (0, 2, 0), now (0, 0, 2)
+    mc.push_back(glm::vec3(1, 1, 2));  // Previously (1, 2, 1), now (1, 1, 2)
+    mc.push_back(glm::vec3(2, 1, 2));
+    mc.push_back(glm::vec3(3, 0, 2));  // Previously (3, 2, 0), now (3, 0, 2)
 
-    // Copy control points from mc to c
+
+    // Check if we have enough control points
     if (mc.size() < n_u * n_v) {
         std::cerr << "Error: Not enough control points initialized." << std::endl;
         return; // Early exit if there aren't enough control points
     }
 
+    // Map the flat control point array mc to the 2D grid c without resizing
     for (int i = 0; i < n_u; ++i) {
         for (int j = 0; j < n_v; ++j) {
-            // Adjust the indexing based on how you fill mc
-            c[i][j] = mc[i + j * n_u]; // Ensure correct mapping
+            c[i][j] = mc[j * n_u + i];  // Map mc to the static 2D grid c[i][j]
         }
     }
 
@@ -351,6 +348,8 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
     // Initialize any necessary OpenGL state
     this->Initalize();
 }
+
+
 
 void Draw::DrawPoints(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 {
@@ -507,14 +506,14 @@ std::vector<glm::vec3> Draw::EvaluateBiquadratic(int my_u, int my_v, glm::vec3& 
 }
 void Draw::MakeBiquadraticSurface()
 {
+    float h = 0.1f; // Spacing
+    int nu = static_cast<int>((mu[n_u] - mu[d_u]) / h);  // Calculate the number of steps in u
+    int nv = static_cast<int>((mv[n_v] - mv[d_v]) / h);  // Calculate the number of steps in v
 
-    float h = 0.1f; // s p a ci n g
-    int nu = (mu[n_u] - mu[d_u]) / h;
-    int nv = (mv[n_v] - mv[d_v]) / h;
-
-    for(int i = 0; i < nv; ++i)
+    // Iterate through v and u to generate surface points
+    for (int i = 0; i < nv; ++i)
     {
-        for(int j = 0; j < nu; ++j)
+        for (int j = 0; j < nu; ++j)
         {
             float u = j * h;
             float v = i * h;
@@ -527,38 +526,38 @@ void Draw::MakeBiquadraticSurface()
             auto koeff_par = B2(u, v, my_u, my_v);
 
             // Evaluate the biquadratic surface at the current u and v
-            std::vector<glm::vec3> p0 = EvaluateBiquadratic(my_u, my_v, koeff_par.first, koeff_par.second);
             glm::vec3 surfacePoint = deBoorSurface(d_u, d_v, mu, mv, mc, u, v);
-            if (!p0.empty()) {  // Make sure p0 contains at least one point
-                Vertex vertex;
 
-                // Assign the position values from the first glm::vec3 in the result
-                vertex.x = surfacePoint.x;
-                vertex.y = surfacePoint.y;
-                vertex.z = surfacePoint.z;
+            Vertex vertex;
 
-                vertex.r = 1.0f;
-                vertex.g = 1.0f;
-                vertex.b = 1.0f;
+            // Assign the position values from the evaluated surface point
+            vertex.x = surfacePoint.x;
+            vertex.y = surfacePoint.y;
+            vertex.z = surfacePoint.z;
 
-                vertex.u = static_cast<float>(j) / (n_u - 1); // Column index normalized
-                vertex.v = static_cast<float>(i) / (n_v - 1); // Row index normalized
+            // Assign color and texture coordinates
+            vertex.r = 1.0f;
+            vertex.g = 1.0f;
+            vertex.b = 1.0f;
 
-                vertex.normalx = 0.0f;
-                vertex.normaly = 1.0f;
-                vertex.normalz = 0.0f;
-               // std::cout << "Vertex Position: (" << vertex.x << ", " << vertex.y << ", " << vertex.z << ")\n";
-                // Push the computed surface point into the vertices array
-                vertices.push_back(vertex);
-            }
-           
+            vertex.u = static_cast<float>(j) / (nu - 1); // Column index normalized
+            vertex.v = static_cast<float>(i) / (nv - 1); // Row index normalized
+
+            vertex.normalx = 0.0f;
+            vertex.normaly = 1.0f;
+            vertex.normalz = 0.0f;
+
+            // Push the computed surface point into the vertices array
+            vertices.push_back(vertex);
         }
     }
-    for (int i = 0; i < nv; ++i) {
-        for (int j = 0; j < nu; ++j) {
-            int idx1 = i * (nu + 1) + j;
+
+    // Generate indices for the triangle mesh
+    for (int i = 0; i < nv - 1; ++i) {
+        for (int j = 0; j < nu - 1; ++j) {
+            int idx1 = i * nu + j;
             int idx2 = idx1 + 1;
-            int idx3 = idx1 + (nu + 1);
+            int idx3 = idx1 + nu;
             int idx4 = idx3 + 1;
 
             // First triangle (idx1, idx2, idx3)
@@ -570,11 +569,8 @@ void Draw::MakeBiquadraticSurface()
             indices.push_back(idx2);
             indices.push_back(idx4);
             indices.push_back(idx3);
-          
         }
     }
-   
-  
 }
 
 std::pair<glm::vec3, glm::vec3> Draw::B2(float tu, float tv, int my_u, int my_v)

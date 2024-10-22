@@ -122,7 +122,7 @@ int main()
 
     // Terrain Entity
     Entity planeObject;
-    planeObject.AddComponent<PositionComponent>(608277.0f, 400.0f, 6750600.0f);
+    planeObject.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
     planeObject.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "sphere");
 
     Entity splinesurface;
@@ -130,7 +130,7 @@ int main()
     splinesurface.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(10.0f, 1.0f, 10.0f), "bsplinesurface");
 
     Entity pointCloud;
-    pointCloud.AddComponent<PositionComponent>(0.0f, 0.0f, 0.0f);
+    pointCloud.AddComponent<PositionComponent>(-607435.0f, -400.0f, -6750600.0f);
     pointCloud.AddComponent<RenderComponent>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), "pointcloud");
 
 
@@ -139,8 +139,8 @@ int main()
     std::shared_ptr <PhysicsSystem> physicsSystem = std::make_shared<PhysicsSystem>();
     std::shared_ptr <CollisionSystem> collisionSystem = std::make_shared<CollisionSystem>();
 
+    //renderSystem->initalize(pointCloud);
     renderSystem->initalize(splinesurface);
-    renderSystem->initalize(pointCloud);
     
 
 
@@ -227,7 +227,7 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
+       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
