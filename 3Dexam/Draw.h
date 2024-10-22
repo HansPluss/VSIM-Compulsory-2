@@ -56,6 +56,8 @@ public:
 	void MakeBiquadraticSurface();
 	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
 	int FindKnotInterval(const std::vector<float>& knots, int degree, int n, float t);
+	glm::vec3 deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v);
+	glm::vec3 deBoor(int k, int degree, const std::vector<float>& knots, std::vector<glm::vec3> controlPoints, float t);
 	std::vector<glm::vec3> ReadLazFile(const std::string& filePath);
 	virtual void UpdateTick(float deltatime) override; 
 	std::vector<glm::vec3> Readfile(const char* fileName);

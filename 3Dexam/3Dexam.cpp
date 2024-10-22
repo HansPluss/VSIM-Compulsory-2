@@ -148,8 +148,8 @@ int main()
 
     // Intializing entity vector
     std::vector<Entity*> myEntities;
-    myEntities.push_back(&player);
-    myEntities.push_back(&planeObject);
+    //myEntities.push_back(&player);
+    //myEntities.push_back(&planeObject);
    
 
     //Add all components to storage for batch proccesing

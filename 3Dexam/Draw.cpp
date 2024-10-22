@@ -311,6 +311,12 @@ void Draw::DrawBSplineSurface(glm::vec3 Color, glm::vec3 pos, glm::vec3 size)
 
     // Initialize control points with enough points
     mc.clear(); // Clear previous control points if necessary
+    for (auto i = 0; i < n_u; ++i) {
+       
+
+
+
+    }
     mc.push_back(glm::vec3(0, 0, 0));
     mc.push_back(glm::vec3(1, 0, 0));
     mc.push_back(glm::vec3(2, 0, 0));
@@ -522,13 +528,14 @@ void Draw::MakeBiquadraticSurface()
 
             // Evaluate the biquadratic surface at the current u and v
             std::vector<glm::vec3> p0 = EvaluateBiquadratic(my_u, my_v, koeff_par.first, koeff_par.second);
+            glm::vec3 surfacePoint = deBoorSurface(d_u, d_v, mu, mv, mc, u, v);
             if (!p0.empty()) {  // Make sure p0 contains at least one point
                 Vertex vertex;
 
                 // Assign the position values from the first glm::vec3 in the result
-                vertex.x = p0[0].x;
-                vertex.y = p0[0].y;
-                vertex.z = p0[0].z;
+                vertex.x = surfacePoint.x;
+                vertex.y = surfacePoint.y;
+                vertex.z = surfacePoint.z;
 
                 vertex.r = 1.0f;
                 vertex.g = 1.0f;
@@ -582,6 +589,11 @@ std::pair<glm::vec3, glm::vec3> Draw::B2(float tu, float tv, int my_u, int my_v)
     Bv.x = (1 - tv) * (1 - tv);
     Bv.y = 2 * tv * (1 - tv);
     Bv.z = tv * tv;
+    float sumBu = Bu.x + Bu.y + Bu.z;
+    float sumBv = Bv.x + Bv.y + Bv.z;
+
+    Bu /= sumBu;
+    Bv /= sumBv;
    /* std::cout << "Bu: (" << Bu.x << ", " << Bu.y << ", " << Bu.z << ")\n";
     std::cout << "Bv: (" << Bv.x << ", " << Bv.y << ", " << Bv.z << ")\n";*/
     return std::make_pair(Bu, Bv);
@@ -597,8 +609,61 @@ int Draw::FindKnotInterval(const std::vector<float>& knots, int degree, int n, f
     std::cout << "could not find knot" << std::endl;
     return -1;
 }
+glm::vec3 Draw::deBoorSurface(int du, int dv, const std::vector<float>& knotsU, const std::vector<float>& knotsV, std::vector<glm::vec3> controlPoints, float u, float v)
+{
+    // Step 1: Apply de Boor along the u-direction
+    std::vector<glm::vec3> tempPoints;
+    for (int i = 0; i < n_v; ++i) {
+        // Extract the i-th row of control points (nu points per row)
+        std::vector<glm::vec3> row;
+        for (int j = 0; j < n_u; ++j) {
+            row.push_back(controlPoints[i * n_u + j]);
+        }
+
+        // Apply de Boor along the u-direction for this row
+        glm::vec3 t = deBoor(du, du, knotsU, row, u);
+        tempPoints.push_back(t); // Store the result for v-direction interpolation
+    }
+
+    // Now apply de Boor along the v-direction on the result from the u-direction
+    glm::vec3 f = deBoor(dv, dv, knotsV, tempPoints, v);
+    return f; // Interpolate along v with the new points
+}
 
 
+glm::vec3 Draw::deBoor(int k, int degree, const std::vector<float>& knots, std::vector<glm::vec3> controlPoints, float t)
+{
+    // Find the knot span index
+    int span = -1;
+    for (int i = degree; i < knots.size() - 1; ++i) {
+        if (t >= knots[i] && t < knots[i + 1]) {
+            span = i;
+            break;
+        }
+    }
+
+    if (span == -1) {
+        std::cout << "Could not find knot span" << std::endl;
+        return glm::vec3(0.0f); // Return a default value if not found
+    }
+
+    // Initialize d as a copy of control points for the relevant knot span
+    std::vector<glm::vec3> d(degree + 1);
+    for (int i = 0; i <= degree; ++i) {
+        d[i] = controlPoints[span - degree + i];
+    }
+
+    // Perform de Boor recursion
+    for (int r = 1; r <= degree; ++r) {
+        for (int j = degree; j >= r; --j) {
+            float alpha = (t - knots[span - degree + j]) / (knots[span + 1 + j - r] - knots[span - degree + j]);
+            d[j] = (1.0f - alpha) * d[j - 1] + alpha * d[j];
+        }
+    }
+
+    // The evaluated point is now stored in d[degree]
+    return d[degree];
+}
 
 std::vector<glm::vec3> Draw::ReadLazFile(const std::string& filePath)
 {
